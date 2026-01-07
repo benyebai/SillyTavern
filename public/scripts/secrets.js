@@ -72,6 +72,7 @@ export const SECRET_KEYS = {
     COMETAPI: 'api_key_cometapi',
     ZAI: 'api_key_zai',
     SILICONFLOW: 'api_key_siliconflow',
+    VERCEL_AI_GATEWAY: 'api_key_vercel_ai_gateway',
     ELEVENLABS: 'api_key_elevenlabs',
 };
 
@@ -133,6 +134,7 @@ const FRIENDLY_NAMES = {
     [SECRET_KEYS.AZURE_OPENAI]: 'Azure OpenAI',
     [SECRET_KEYS.ZAI]: 'Z.AI',
     [SECRET_KEYS.SILICONFLOW]: 'SiliconFlow',
+    [SECRET_KEYS.VERCEL_AI_GATEWAY]: 'Vercel AI Gateway',
     [SECRET_KEYS.ELEVENLABS]: 'ElevenLabs TTS',
 };
 
@@ -176,6 +178,7 @@ const INPUT_MAP = {
     [SECRET_KEYS.AZURE_OPENAI]: '#api_key_azure_openai',
     [SECRET_KEYS.ZAI]: '#api_key_zai',
     [SECRET_KEYS.SILICONFLOW]: '#api_key_siliconflow',
+    [SECRET_KEYS.VERCEL_AI_GATEWAY]: '#api_key_vercel_ai_gateway',
     [SECRET_KEYS.COMFY_RUNPOD]: '#api_key_comfy_runpod',
 };
 

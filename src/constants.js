@@ -209,6 +209,7 @@ export const CHAT_COMPLETION_SOURCES = {
     AZURE_OPENAI: 'azure_openai',
     ZAI: 'zai',
     SILICONFLOW: 'siliconflow',
+    VERCEL_AI_GATEWAY: 'vercel_ai_gateway',
 };
 
 /**
@@ -368,6 +369,11 @@ export const AIMLAPI_HEADERS = {
 };
 
 export const FEATHERLESS_HEADERS = {
+    'HTTP-Referer': 'https://sillytavern.app',
+    'X-Title': 'SillyTavern',
+};
+
+export const VERCEL_AI_GATEWAY_HEADERS = {
     'HTTP-Referer': 'https://sillytavern.app',
     'X-Title': 'SillyTavern',
 };
