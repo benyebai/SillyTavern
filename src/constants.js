@@ -209,6 +209,7 @@ export const CHAT_COMPLETION_SOURCES = {
     AZURE_OPENAI: 'azure_openai',
     ZAI: 'zai',
     SILICONFLOW: 'siliconflow',
+    VERCEL_AI_GATEWAY: 'vercel_ai_gateway',
 };
 
 /**
@@ -233,6 +234,7 @@ export const TEXTGEN_TYPES = {
     FEATHERLESS: 'featherless',
     HUGGINGFACE: 'huggingface',
     GENERIC: 'generic',
+    VERCEL_AI_GATEWAY: 'vercel_ai_gateway',
 };
 
 export const INFERMATICAI_KEYS = [
@@ -372,6 +374,11 @@ export const FEATHERLESS_HEADERS = {
     'X-Title': 'SillyTavern',
 };
 
+export const VERCEL_AI_GATEWAY_HEADERS = {
+    'HTTP-Referer': 'https://sillytavern.app',
+    'X-Title': 'SillyTavern',
+};
+
 export const OPENROUTER_KEYS = [
     'max_tokens',
     'temperature',
@@ -390,6 +397,23 @@ export const OPENROUTER_KEYS = [
     'stop',
     'provider',
     'include_reasoning',
+];
+
+export const VERCEL_AI_GATEWAY_KEYS = [
+    'max_tokens',
+    'temperature',
+    'top_k',
+    'top_p',
+    'presence_penalty',
+    'frequency_penalty',
+    'repetition_penalty',
+    'min_p',
+    'seed',
+    'logit_bias',
+    'model',
+    'stream',
+    'prompt',
+    'stop',
 ];
 
 // https://github.com/vllm-project/vllm/blob/0f8a91401c89ac0a8018def3756829611b57727f/vllm/entrypoints/openai/protocol.py#L220

@@ -13,6 +13,7 @@ import {
     OPENAI_REASONING_EFFORT_MODELS,
     OPENAI_VERBOSITY_MODELS,
     OPENROUTER_HEADERS,
+    VERCEL_AI_GATEWAY_HEADERS,
     VERTEX_SAFETY,
     ZAI_ENDPOINT,
 } from '../../constants.js';
@@ -85,6 +86,7 @@ const API_ZAI_COMMON = 'https://api.z.ai/api/paas/v4';
 const API_ZAI_CODING = 'https://api.z.ai/api/coding/paas/v4';
 const API_SILICONFLOW = 'https://api.siliconflow.com/v1';
 const API_OPENROUTER = 'https://openrouter.ai/api/v1';
+const API_VERCEL_AI_GATEWAY = 'https://ai-gateway.vercel.sh/v1';
 
 /**
  * Module-scoped Claude caching configuration values.
@@ -1826,6 +1828,10 @@ router.post('/status', async function (request, statusResponse) {
             apiUrl = API_SILICONFLOW;
             apiKey = readSecret(request.user.directories, SECRET_KEYS.SILICONFLOW);
             headers = {};
+        } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.VERCEL_AI_GATEWAY) {
+            apiUrl = API_VERCEL_AI_GATEWAY;
+            apiKey = readSecret(request.user.directories, SECRET_KEYS.VERCEL_AI_GATEWAY);
+            headers = { ...VERCEL_AI_GATEWAY_HEADERS };
         } else {
             console.warn('This chat completion source is not supported yet.');
             return statusResponse.status(400).send({ error: true });
@@ -2142,6 +2148,36 @@ router.post('/generate', async function (request, response) {
 
             if (isGemini) {
                 bodyParams['safety_settings'] = GEMINI_SAFETY;
+            }
+        } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.VERCEL_AI_GATEWAY) {
+            apiUrl = 'https://ai-gateway.vercel.sh/v1';
+            apiKey = readSecret(request.user.directories, SECRET_KEYS.VERCEL_AI_GATEWAY);
+            headers = { ...VERCEL_AI_GATEWAY_HEADERS };
+
+            // Vercel AI Gateway proxies to multiple providers (OpenAI, Anthropic, Google, etc.)
+            // Different providers support different parameters, so we only send universally supported ones
+            // and let the gateway handle provider-specific translation
+            const isOpenAIModel = request.body.model?.startsWith('openai/');
+
+            bodyParams = {
+                // Override to remove unsupported parameters for non-OpenAI providers
+                'presence_penalty': isOpenAIModel ? request.body.presence_penalty : undefined,
+                'frequency_penalty': isOpenAIModel ? request.body.frequency_penalty : undefined,
+                'logit_bias': isOpenAIModel ? request.body.logit_bias : undefined,
+                'seed': isOpenAIModel ? request.body.seed : undefined,
+                'n': isOpenAIModel ? request.body.n : undefined,
+                'top_k': undefined, // Not widely supported
+            };
+
+            if (request.body.json_schema && isOpenAIModel) {
+                bodyParams['response_format'] = {
+                    type: 'json_schema',
+                    json_schema: {
+                        name: request.body.json_schema.name,
+                        strict: request.body.json_schema.strict ?? true,
+                        schema: request.body.json_schema.value,
+                    },
+                };
             }
         } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.CUSTOM) {
             apiUrl = request.body.custom_url;

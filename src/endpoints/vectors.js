@@ -36,6 +36,7 @@ const SOURCES = [
     'vertexai',
     'electronhub',
     'openrouter',
+    'vercel_ai_gateway',
     'chutes',
 ];
 
@@ -59,6 +60,8 @@ async function getVector(source, sourceSettings, text, isQuery, directories) {
         case 'electronhub':
             return getOpenAIVector(text, source, directories, sourceSettings.model);
         case 'openrouter':
+            return getOpenAIVector(text, source, directories, sourceSettings.model);
+        case 'vercel_ai_gateway':
             return getOpenAIVector(text, source, directories, sourceSettings.model);
         case 'transformers':
             return getTransformersVector(text);
@@ -115,6 +118,9 @@ async function getBatchVector(source, sourceSettings, texts, isQuery, directorie
                 results.push(...await getOpenAIBatchVector(batch, source, directories, sourceSettings.model));
                 break;
             case 'openrouter':
+                results.push(...await getOpenAIBatchVector(batch, source, directories, sourceSettings.model));
+                break;
+            case 'vercel_ai_gateway':
                 results.push(...await getOpenAIBatchVector(batch, source, directories, sourceSettings.model));
                 break;
             case 'transformers':
@@ -181,6 +187,10 @@ function getSourceSettings(source, request) {
         case 'openrouter':
             return {
                 model: String(request.body.model) || 'openai/text-embedding-3-large',
+            };
+        case 'vercel_ai_gateway':
+            return {
+                model: String(request.body.model) || 'voyage/voyage-3.5',
             };
         case 'cohere':
             return {

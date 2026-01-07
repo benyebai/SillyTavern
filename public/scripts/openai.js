@@ -197,6 +197,7 @@ export const chat_completion_sources = {
     AZURE_OPENAI: 'azure_openai',
     ZAI: 'zai',
     SILICONFLOW: 'siliconflow',
+    VERCEL_AI_GATEWAY: 'vercel_ai_gateway',
 };
 
 const character_names_behavior = {
@@ -298,6 +299,7 @@ export const settingsToUpdate = {
     chutes_model: ['#model_chutes_select', 'chutes_model', false, true],
     chutes_sort_models: ['#chutes_sort_models', 'chutes_sort_models', false, true],
     siliconflow_model: ['#model_siliconflow_select', 'siliconflow_model', false, true],
+    vercel_ai_gateway_model: ['#model_vercel_ai_gateway_select', 'vercel_ai_gateway_model', false, true],
     electronhub_model: ['#model_electronhub_select', 'electronhub_model', false, true],
     electronhub_sort_models: ['#electronhub_sort_models', 'electronhub_sort_models', false, true],
     electronhub_group_models: ['#electronhub_group_models', 'electronhub_group_models', false, true],
@@ -407,6 +409,7 @@ const default_settings = {
     chutes_model: 'deepseek-ai/DeepSeek-V3-0324',
     chutes_sort_models: 'alphabetically',
     siliconflow_model: 'deepseek-ai/DeepSeek-V3',
+    vercel_ai_gateway_model: 'openai/gpt-4o',
     electronhub_model: 'gpt-4o-mini',
     electronhub_sort_models: 'alphabetically',
     electronhub_group_models: false,
@@ -1648,6 +1651,8 @@ export function getChatCompletionModel(settings = null) {
             return settings.azure_openai_model;
         case chat_completion_sources.ZAI:
             return settings.zai_model;
+        case chat_completion_sources.VERCEL_AI_GATEWAY:
+            return settings.vercel_ai_gateway_model;
         default:
             console.error(`Unknown chat completion source: ${source}`);
             return '';
@@ -2091,6 +2096,36 @@ function saveModelList(data) {
         }
 
         $('#model_siliconflow_select').val(oai_settings.siliconflow_model).trigger('change');
+    }
+
+    if (oai_settings.chat_completion_source === chat_completion_sources.VERCEL_AI_GATEWAY) {
+        $('#model_vercel_ai_gateway_select').empty();
+
+        // Filter out embedding models and other non-chat models
+        const embeddingProviders = ['voyage', 'cohere-embedding'];
+        const chatModels = model_list.filter((model) => {
+            const modelId = model.id?.toLowerCase() || '';
+            // Exclude embedding models
+            if (modelId.includes('embedding')) return false;
+            // Exclude voyage models (embedding only)
+            if (embeddingProviders.some(p => modelId.startsWith(p + '/'))) return false;
+            return true;
+        });
+
+        chatModels.forEach((model) => {
+            $('#model_vercel_ai_gateway_select').append(
+                $('<option>', {
+                    value: model.id,
+                    text: model.id,
+                }));
+        });
+
+        const selectedModel = chatModels.find(model => model.id === oai_settings.vercel_ai_gateway_model);
+        if (chatModels.length > 0 && (!selectedModel || !oai_settings.vercel_ai_gateway_model)) {
+            oai_settings.vercel_ai_gateway_model = chatModels[0].id;
+        }
+
+        $('#model_vercel_ai_gateway_select').val(oai_settings.vercel_ai_gateway_model).trigger('change');
     }
 
     if (oai_settings.chat_completion_source === chat_completion_sources.FIREWORKS) {
@@ -5092,6 +5127,15 @@ async function onModelChange() {
         oai_settings.siliconflow_model = value;
     }
 
+    if ($(this).is('#model_vercel_ai_gateway_select')) {
+        if (!value) {
+            console.debug('Null Vercel AI Gateway model selected. Ignoring.');
+            return;
+        }
+        console.log('Vercel AI Gateway model changed to', value);
+        oai_settings.vercel_ai_gateway_model = value;
+    }
+
     if ($(this).is('#model_electronhub_select')) {
         if (!value || !hasModelsLoaded) {
             console.debug('Null ElectronHub model selected. Ignoring.');
@@ -5585,6 +5629,7 @@ async function onConnectButtonClick(e) {
         [chat_completion_sources.PERPLEXITY]: { key: SECRET_KEYS.PERPLEXITY, selector: '#api_key_perplexity', proxy: false },
         [chat_completion_sources.GROQ]: { key: SECRET_KEYS.GROQ, selector: '#api_key_groq', proxy: false },
         [chat_completion_sources.SILICONFLOW]: { key: SECRET_KEYS.SILICONFLOW, selector: '#api_key_siliconflow', proxy: false },
+        [chat_completion_sources.VERCEL_AI_GATEWAY]: { key: SECRET_KEYS.VERCEL_AI_GATEWAY, selector: '#api_key_vercel_ai_gateway', proxy: false },
         [chat_completion_sources.ELECTRONHUB]: { key: SECRET_KEYS.ELECTRONHUB, selector: '#api_key_electronhub', proxy: false },
         [chat_completion_sources.NANOGPT]: { key: SECRET_KEYS.NANOGPT, selector: '#api_key_nanogpt', proxy: false },
         [chat_completion_sources.DEEPSEEK]: { key: SECRET_KEYS.DEEPSEEK, selector: '#api_key_deepseek', proxy: true },
@@ -5709,6 +5754,9 @@ function toggleChatCompletionForms() {
     }
     else if (oai_settings.chat_completion_source == chat_completion_sources.ZAI) {
         $('#model_zai_select').trigger('change');
+    }
+    else if (oai_settings.chat_completion_source == chat_completion_sources.VERCEL_AI_GATEWAY) {
+        $('#model_vercel_ai_gateway_select').trigger('change');
     }
 
     $('[data-source]').each(function () {
@@ -6809,6 +6857,7 @@ export function initOpenAI() {
     $('#model_groq_select').on('change', onModelChange);
     $('#model_chutes_select').on('change', onModelChange);
     $('#model_siliconflow_select').on('change', onModelChange);
+    $('#model_vercel_ai_gateway_select').on('change', onModelChange);
     $('#model_electronhub_select').on('change', onModelChange);
     $('#model_nanogpt_select').on('change', onModelChange);
     $('#model_deepseek_select').on('change', onModelChange);

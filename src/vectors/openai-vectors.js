@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 import { SECRET_KEYS, readSecret } from '../endpoints/secrets.js';
-import { OPENROUTER_HEADERS } from '../constants.js';
+import { OPENROUTER_HEADERS, VERCEL_AI_GATEWAY_HEADERS } from '../constants.js';
 
 const SOURCES = {
     'togetherai': {
@@ -36,6 +36,13 @@ const SOURCES = {
         url: 'https://openrouter.ai/api/v1',
         model: 'openai/text-embedding-3-large',
         headers: { ...OPENROUTER_HEADERS },
+        processBody: () => {},
+    },
+    'vercel_ai_gateway': {
+        secretKey: SECRET_KEYS.VERCEL_AI_GATEWAY,
+        url: 'https://ai-gateway.vercel.sh/v1',
+        model: 'voyage/voyage-3.5',
+        headers: { ...VERCEL_AI_GATEWAY_HEADERS },
         processBody: () => {},
     },
     'chutes': {

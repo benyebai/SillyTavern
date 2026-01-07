@@ -499,6 +499,7 @@ jQuery(async function () {
 
                     const chatCompletionApis = {
                         'openrouter': SECRET_KEYS.OPENROUTER,
+                        'vercel_ai_gateway': SECRET_KEYS.VERCEL_AI_GATEWAY,
                         'groq': SECRET_KEYS.GROQ,
                         'cohere': SECRET_KEYS.COHERE,
                         'aimlapi': SECRET_KEYS.AIMLAPI,
@@ -615,6 +616,7 @@ jQuery(async function () {
         }
 
         await processEndpoint('openrouter', '/api/openrouter/models/multimodal');
+        await processEndpoint('vercel_ai_gateway', '/api/vercel-ai-gateway/models/multimodal');
         await processEndpoint('aimlapi', '/api/backends/chat-completions/multimodal-models/aimlapi');
         await processEndpoint('pollinations', '/api/backends/chat-completions/multimodal-models/pollinations');
         await processEndpoint('nanogpt', '/api/backends/chat-completions/multimodal-models/nanogpt');

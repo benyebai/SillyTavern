@@ -23,7 +23,7 @@ import { power_user, registerDebugFunction } from './power-user.js';
 import { getActiveManualApiSamplers, loadApiSelectedSamplers, isSamplerManualPriorityEnabled } from './samplerSelect.js';
 import { SECRET_KEYS, writeSecret } from './secrets.js';
 import { getEventSourceStream } from './sse-stream.js';
-import { getCurrentDreamGenModelTokenizer, getCurrentOpenRouterModelTokenizer, loadAphroditeModels, loadDreamGenModels, loadFeatherlessModels, loadGenericModels, loadInfermaticAIModels, loadLlamaCppModels, loadMancerModels, loadOllamaModels, loadOpenRouterModels, loadTabbyModels, loadTogetherAIModels, loadVllmModels } from './textgen-models.js';
+import { getCurrentDreamGenModelTokenizer, getCurrentOpenRouterModelTokenizer, loadAphroditeModels, loadDreamGenModels, loadFeatherlessModels, loadGenericModels, loadInfermaticAIModels, loadLlamaCppModels, loadMancerModels, loadOllamaModels, loadOpenRouterModels, loadTabbyModels, loadTogetherAIModels, loadVercelAIGatewayModels, loadVllmModels } from './textgen-models.js';
 import { ENCODE_TOKENIZERS, TEXTGEN_TOKENIZERS, TOKENIZER_SUPPORTED_KEY, getTextTokens, tokenizers } from './tokenizers.js';
 import { AbortReason } from './util/AbortReason.js';
 import { getSortableDelay, onlyUnique, arraysEqual, isObject } from './utils.js';
@@ -44,6 +44,7 @@ export const textgen_types = {
     FEATHERLESS: 'featherless',
     HUGGINGFACE: 'huggingface',
     GENERIC: 'generic',
+    VERCEL_AI_GATEWAY: 'vercel_ai_gateway',
 };
 
 const {
@@ -62,6 +63,7 @@ const {
     KOBOLDCPP,
     HUGGINGFACE,
     FEATHERLESS,
+    VERCEL_AI_GATEWAY,
 } = textgen_types;
 
 const LLAMACPP_DEFAULT_ORDER = [
@@ -125,6 +127,7 @@ export let INFERMATICAI_SERVER = 'https://api.totalgpt.ai';
 export let DREAMGEN_SERVER = 'https://dreamgen.com';
 export let OPENROUTER_SERVER = 'https://openrouter.ai/api';
 export let FEATHERLESS_SERVER = 'https://api.featherless.ai/v1';
+export let VERCEL_AI_GATEWAY_SERVER = 'https://ai-gateway.vercel.sh/v1';
 
 export const SERVER_INPUTS = {
     [textgen_types.OOBA]: '#textgenerationwebui_api_url_text',
@@ -228,6 +231,7 @@ export const textgenerationwebui_settings = {
     min_keep: 0,
     featherless_model: '',
     generic_model: '',
+    vercel_ai_gateway_model: '',
     extensions: {},
 };
 
@@ -356,6 +360,8 @@ export function getTextGenServer(type = null) {
             return DREAMGEN_SERVER;
         case OPENROUTER:
             return OPENROUTER_SERVER;
+        case VERCEL_AI_GATEWAY:
+            return VERCEL_AI_GATEWAY_SERVER;
         default:
             return textgenerationwebui_settings.server_urls[selectedType] ?? '';
     }
@@ -708,6 +714,9 @@ async function getStatusTextgen() {
         } else if (textgenerationwebui_settings.type === textgen_types.GENERIC) {
             loadGenericModels(data?.data);
             setOnlineStatus(textgenerationwebui_settings.generic_model || data?.result || t`Connected`);
+        } else if (textgenerationwebui_settings.type === textgen_types.VERCEL_AI_GATEWAY) {
+            loadVercelAIGatewayModels(data?.data);
+            setOnlineStatus(textgenerationwebui_settings.vercel_ai_gateway_model || data?.result || t`Connected`);
         } else {
             setOnlineStatus(data?.result);
         }
@@ -1466,6 +1475,8 @@ export function getTextGenModel(settings = null) {
             return settings.ollama_model;
         case FEATHERLESS:
             return settings.featherless_model;
+        case VERCEL_AI_GATEWAY:
+            return settings.vercel_ai_gateway_model;
         case HUGGINGFACE:
             return 'tgi';
         case TABBY:

@@ -19,6 +19,7 @@ let featherlessModels = [];
 let tabbyModels = [];
 let llamacppModels = [];
 export let openRouterModels = [];
+export let vercelAIGatewayModels = [];
 
 /**
  * List of OpenRouter providers.
@@ -310,6 +311,29 @@ export async function loadOpenRouterModels(data) {
 
     // Calculate the cost of the selected model + update on settings change
     calculateOpenRouterCost();
+}
+
+export async function loadVercelAIGatewayModels(data) {
+    if (!Array.isArray(data)) {
+        console.error('Invalid Vercel AI Gateway models data', data);
+        return;
+    }
+
+    data.sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
+    vercelAIGatewayModels = data;
+
+    if (!data.find(x => x.id === textgen_settings.vercel_ai_gateway_model)) {
+        textgen_settings.vercel_ai_gateway_model = data[0]?.id || '';
+    }
+
+    $('#vercel_ai_gateway_model').empty();
+    for (const model of data) {
+        const option = document.createElement('option');
+        option.value = model.id;
+        option.text = model.name || model.id;
+        option.selected = model.id === textgen_settings.vercel_ai_gateway_model;
+        $('#vercel_ai_gateway_model').append(option);
+    }
 }
 
 export async function loadVllmModels(data) {
@@ -676,6 +700,12 @@ function onOpenRouterModelSelect() {
     setGenerationParamsFromPreset({ max_length: model.context_length });
 }
 
+function onVercelAIGatewayModelSelect() {
+    const modelId = String($('#vercel_ai_gateway_model').val());
+    textgen_settings.vercel_ai_gateway_model = modelId;
+    $('#api_button_textgenerationwebui').trigger('click');
+}
+
 function onVllmModelSelect() {
     const modelId = String($('#vllm_model').val());
     textgen_settings.vllm_model = modelId;
@@ -978,6 +1008,7 @@ export function initTextGenModels() {
     $('#model_dreamgen_select').on('change', onDreamGenModelSelect);
     $('#ollama_model').on('change', onOllamaModelSelect);
     $('#openrouter_model').on('change', onOpenRouterModelSelect);
+    $('#vercel_ai_gateway_model').on('change', onVercelAIGatewayModelSelect);
     $('#ollama_download_model').on('click', downloadOllamaModel);
     $('#vllm_model').on('change', onVllmModelSelect);
     $('#aphrodite_model').on('change', onAphroditeModelSelect);
@@ -1050,6 +1081,12 @@ export function initTextGenModels() {
             width: '100%',
             templateResult: getOpenRouterModelTemplate,
             matcher: textValueMatcher,
+        });
+        $('#vercel_ai_gateway_model').select2({
+            placeholder: t`Select a model`,
+            searchInputPlaceholder: t`Search models...`,
+            searchInputCssClass: 'text_pole',
+            width: '100%',
         });
         $('#vllm_model').select2({
             placeholder: t`Select a model`,

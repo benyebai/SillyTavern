@@ -9,6 +9,7 @@ import {
     OLLAMA_KEYS,
     INFERMATICAI_KEYS,
     OPENROUTER_KEYS,
+    VERCEL_AI_GATEWAY_KEYS,
     VLLM_KEYS,
     FEATHERLESS_KEYS,
     OPENAI_KEYS,
@@ -128,6 +129,7 @@ router.post('/status', async function (request, response) {
             case TEXTGEN_TYPES.INFERMATICAI:
             case TEXTGEN_TYPES.OPENROUTER:
             case TEXTGEN_TYPES.FEATHERLESS:
+            case TEXTGEN_TYPES.VERCEL_AI_GATEWAY:
                 url += '/v1/models';
                 break;
             case TEXTGEN_TYPES.DREAMGEN:
@@ -319,6 +321,7 @@ router.post('/generate', async function (request, response) {
                 url += '/api/generate';
                 break;
             case TEXTGEN_TYPES.OPENROUTER:
+            case TEXTGEN_TYPES.VERCEL_AI_GATEWAY:
                 url += '/v1/chat/completions';
                 break;
         }
@@ -368,6 +371,11 @@ router.post('/generate', async function (request, response) {
                 delete request.body.provider;
             }
             request.body = _.pickBy(request.body, (_, key) => OPENROUTER_KEYS.includes(key));
+            args.body = JSON.stringify(request.body);
+        }
+
+        if (request.body.api_type === TEXTGEN_TYPES.VERCEL_AI_GATEWAY) {
+            request.body = _.pickBy(request.body, (_, key) => VERCEL_AI_GATEWAY_KEYS.includes(key));
             args.body = JSON.stringify(request.body);
         }
 
