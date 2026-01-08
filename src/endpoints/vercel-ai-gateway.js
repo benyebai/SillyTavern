@@ -97,3 +97,86 @@ router.post('/models/:model', async (req, res) => {
         return res.sendStatus(500);
     }
 });
+
+/**
+ * POST /models/image endpoint
+ * Fetches available image generation models from Vercel AI Gateway
+ */
+router.post('/models/image', async (req, res) => {
+    try {
+        const key = readSecret(req.user.directories, SECRET_KEYS.VERCEL_AI_GATEWAY);
+
+        if (!key) {
+            console.warn('Vercel AI Gateway API key not found');
+            return res.status(400).json({ error: 'Vercel AI Gateway API key not found' });
+        }
+
+        const models = await fetchAllModels(key);
+
+        // Filter models that support image generation
+        const imageModels = models.filter(model =>
+            model.id?.includes('dall-e') ||
+            model.id?.includes('imagen') ||
+            model.id?.includes('stable-diffusion') ||
+            model.id?.includes('flux') ||
+            model.id?.includes('midjourney') ||
+            model.capabilities?.includes('image-generation')
+        );
+
+        return res.json(imageModels);
+    } catch (error) {
+        console.error('Error fetching Vercel AI Gateway image models:', error);
+        return res.sendStatus(500);
+    }
+});
+
+/**
+ * POST /image/generate endpoint
+ * Generates an image using Vercel AI Gateway
+ */
+router.post('/image/generate', async (req, res) => {
+    try {
+        const key = readSecret(req.user.directories, SECRET_KEYS.VERCEL_AI_GATEWAY);
+
+        if (!key) {
+            console.warn('Vercel AI Gateway API key not found');
+            return res.status(400).json({ error: 'Vercel AI Gateway API key not found' });
+        }
+
+        const { model, prompt, width, height } = req.body;
+
+        if (!prompt) {
+            return res.status(400).json({ error: 'Prompt is required' });
+        }
+
+        const size = width && height ? `${width}x${height}` : '1024x1024';
+
+        const response = await fetch(`${API_VERCEL_AI_GATEWAY}/images/generations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${key}`,
+            },
+            body: JSON.stringify({
+                model: model || 'dall-e-3',
+                prompt: prompt,
+                size: size,
+                n: 1,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Vercel AI Gateway image generation failed:', response.status, errorText);
+            return res.status(response.status).json({ error: 'Image generation failed', details: errorText });
+        }
+
+        /** @type {any} */
+        const data = await response.json();
+
+        return res.json(data);
+    } catch (error) {
+        console.error('Error generating image with Vercel AI Gateway:', error);
+        return res.sendStatus(500);
+    }
+});

@@ -92,6 +92,7 @@ const sources = {
     google: 'google',
     zai: 'zai',
     openrouter: 'openrouter',
+    vercel_ai_gateway: 'vercel_ai_gateway',
 };
 const comfyTypes = {
     standard: 'standard',
@@ -1599,6 +1600,9 @@ async function loadSamplers() {
         case sources.openrouter:
             samplers = ['N/A'];
             break;
+        case sources.vercel_ai_gateway:
+            samplers = ['N/A'];
+            break;
     }
 
     for (const sampler of samplers) {
@@ -1812,6 +1816,9 @@ async function loadModels() {
             break;
         case sources.openrouter:
             models = await loadOpenRouterModels();
+            break;
+        case sources.vercel_ai_gateway:
+            models = await loadVercelAIGatewayModels();
             break;
     }
 
@@ -2310,6 +2317,20 @@ async function loadOpenRouterModels() {
     return [];
 }
 
+async function loadVercelAIGatewayModels() {
+    const result = await fetch('/api/vercel-ai-gateway/models/image', {
+        method: 'POST',
+        headers: getRequestHeaders(),
+    });
+
+    if (result.ok) {
+        const data = await result.json();
+        return data.map(m => ({ value: m.id, text: m.id }));
+    }
+
+    return [];
+}
+
 function loadNovelSchedulers() {
     return ['karras', 'native', 'exponential', 'polyexponential'];
 }
@@ -2411,6 +2432,9 @@ async function loadSchedulers() {
             schedulers = ['N/A'];
             break;
         case sources.openrouter:
+            schedulers = ['N/A'];
+            break;
+        case sources.vercel_ai_gateway:
             schedulers = ['N/A'];
             break;
     }
@@ -2523,6 +2547,9 @@ async function loadVaes() {
             vaes = ['N/A'];
             break;
         case sources.openrouter:
+            vaes = ['N/A'];
+            break;
+        case sources.vercel_ai_gateway:
             vaes = ['N/A'];
             break;
     }
@@ -3133,6 +3160,9 @@ async function sendGenerationRequest(generationType, prompt, additionalNegativeP
                 break;
             case sources.openrouter:
                 result = await generateOpenRouterImage(prefixedPrompt, signal);
+                break;
+            case sources.vercel_ai_gateway:
+                result = await generateVercelAIGatewayImage(prefixedPrompt, signal);
                 break;
         }
 
@@ -4303,6 +4333,28 @@ async function generateOpenRouterImage(prompt, signal) {
     throw new Error(text);
 }
 
+async function generateVercelAIGatewayImage(prompt, signal) {
+    const result = await fetch('/api/vercel-ai-gateway/image/generate', {
+        method: 'POST',
+        headers: getRequestHeaders(),
+        signal: signal,
+        body: JSON.stringify({
+            model: extension_settings.sd.model,
+            prompt: prompt,
+            width: extension_settings.sd.width,
+            height: extension_settings.sd.height,
+        }),
+    });
+
+    if (result.ok) {
+        const data = await result.json();
+        return { format: 'png', data: data.image };
+    }
+
+    const text = await result.text();
+    throw new Error(text);
+}
+
 async function onComfyOpenWorkflowEditorClick() {
     let workflow = await (await fetch('/api/sd/comfy/workflow', {
         method: 'POST',
@@ -4621,6 +4673,8 @@ function isValidState() {
             return secret_state[SECRET_KEYS.ZAI];
         case sources.openrouter:
             return secret_state[SECRET_KEYS.OPENROUTER];
+        case sources.vercel_ai_gateway:
+            return secret_state[SECRET_KEYS.VERCEL_AI_GATEWAY];
         default:
             return false;
     }
