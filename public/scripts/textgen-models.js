@@ -19,6 +19,7 @@ let featherlessModels = [];
 let tabbyModels = [];
 let llamacppModels = [];
 export let openRouterModels = [];
+export let vercelAIGatewayModels = [];
 
 /**
  * List of OpenRouter providers.
@@ -356,6 +357,28 @@ export async function loadAphroditeModels(data) {
     }
 }
 
+export async function loadVercelAIGatewayModels(data) {
+    if (!Array.isArray(data)) {
+        console.error('Invalid Vercel AI Gateway models data', data);
+        return;
+    }
+
+    vercelAIGatewayModels = data;
+
+    if (!data.find(x => x.id === textgen_settings.vercel_ai_gateway_model)) {
+        textgen_settings.vercel_ai_gateway_model = data[0]?.id || '';
+    }
+
+    $('#vercel_ai_gateway_model').empty();
+    for (const model of data) {
+        const option = document.createElement('option');
+        option.value = model.id;
+        option.text = model.id;
+        option.selected = model.id === textgen_settings.vercel_ai_gateway_model;
+        $('#vercel_ai_gateway_model').append(option);
+    }
+}
+
 let featherlessCurrentPage = 1;
 export async function loadFeatherlessModels(data) {
     const searchBar = document.getElementById('featherless_model_search_bar');
@@ -688,6 +711,12 @@ function onAphroditeModelSelect() {
     $('#api_button_textgenerationwebui').trigger('click');
 }
 
+function onVercelAIGatewayModelSelect() {
+    const modelId = String($('#vercel_ai_gateway_model').val());
+    textgen_settings.vercel_ai_gateway_model = modelId;
+    $('#api_button_textgenerationwebui').trigger('click');
+}
+
 function getMancerModelTemplate(option) {
     const model = mancerModels.find(x => x.id === option?.element?.value);
 
@@ -981,6 +1010,7 @@ export function initTextGenModels() {
     $('#ollama_download_model').on('click', downloadOllamaModel);
     $('#vllm_model').on('change', onVllmModelSelect);
     $('#aphrodite_model').on('change', onAphroditeModelSelect);
+    $('#vercel_ai_gateway_model').on('change', onVercelAIGatewayModelSelect);
     $('#tabby_download_model').on('click', downloadTabbyModel);
     $('#tabby_model').on('change', onTabbyModelSelect);
     $('#llamacpp_model').on('change', onLlamaCppModelSelect);
@@ -1064,6 +1094,12 @@ export function initTextGenModels() {
             searchInputCssClass: 'text_pole',
             width: '100%',
             templateResult: getAphroditeModelTemplate,
+        });
+        $('#vercel_ai_gateway_model').select2({
+            placeholder: t`Select a model`,
+            searchInputPlaceholder: t`Search models...`,
+            searchInputCssClass: 'text_pole',
+            width: '100%',
         });
         providersSelect.select2({
             sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),

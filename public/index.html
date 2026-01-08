@@ -2366,6 +2366,7 @@
                                     <option value="tabby">TabbyAPI</option>
                                     <option value="ooba">Text Generation WebUI (oobabooga)</option>
                                     <option value="togetherai">TogetherAI</option>
+                                    <option value="vercel_ai_gateway">Vercel AI Gateway</option>
                                     <option value="vllm">vLLM</option>
                                 </select>
                             </div>
@@ -2583,6 +2584,30 @@
                                         -- Connect to the API --
                                     </option>
                                 </select>
+                            </div>
+                            <div data-tg-type="vercel_ai_gateway">
+                                <div class="flex-container flexFlowColumn">
+                                    <a href="https://sdk.vercel.ai/docs/ai-sdk-core/ai-gateway" target="_blank" data-i18n="Vercel AI Gateway">
+                                        Vercel AI Gateway
+                                    </a>
+                                </div>
+                                <h4 data-i18n="Vercel AI Gateway API Key">Vercel AI Gateway API Key</h4>
+                                <div class="flex-container">
+                                    <input id="api_key_vercel_ai_gateway" name="api_key_vercel_ai_gateway" class="text_pole flex1 wide100p" type="text" autocomplete="off">
+                                    <div title="Manage API keys" data-i18n="[title]Manage API keys" class="menu_button fa-solid fa-key fa-fw manage-api-keys" data-key="api_key_vercel_ai_gateway">
+                                    </div>
+                                </div>
+                                <div data-for="api_key_vercel_ai_gateway" class="neutral_warning" data-i18n="For privacy reasons, your API key will be hidden after you click 'Connect'.">
+                                    For privacy reasons, your API key will be hidden after you click 'Connect'.
+                                </div>
+                                <div>
+                                    <h4 data-i18n="Vercel AI Gateway Model">Vercel AI Gateway Model</h4>
+                                    <select id="vercel_ai_gateway_model">
+                                        <option value="" data-i18n="-- Connect to the API --">
+                                            -- Connect to the API --
+                                        </option>
+                                    </select>
+                                </div>
                             </div>
                             <div data-tg-type="vllm">
                                 <div class="flex-container flexFlowColumn">

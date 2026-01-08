@@ -234,6 +234,7 @@ export const TEXTGEN_TYPES = {
     FEATHERLESS: 'featherless',
     HUGGINGFACE: 'huggingface',
     GENERIC: 'generic',
+    VERCEL_AI_GATEWAY: 'vercel_ai_gateway',
 };
 
 export const INFERMATICAI_KEYS = [
@@ -352,6 +353,23 @@ export const OPENAI_KEYS = [
     'max_tokens',
     'n',
     'best_of',
+];
+
+// Vercel AI Gateway uses OpenAI-compatible API
+export const VERCEL_AI_GATEWAY_KEYS = [
+    'model',
+    'prompt',
+    'stream',
+    'temperature',
+    'top_p',
+    'frequency_penalty',
+    'presence_penalty',
+    'stop',
+    'seed',
+    'logit_bias',
+    'logprobs',
+    'max_tokens',
+    'n',
 ];
 
 export const AVATAR_WIDTH = 512;

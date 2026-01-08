@@ -12,6 +12,7 @@ import {
     VLLM_KEYS,
     FEATHERLESS_KEYS,
     OPENAI_KEYS,
+    VERCEL_AI_GATEWAY_KEYS,
 } from '../../constants.js';
 import { forwardFetchResponse, trimV1, getConfigValue } from '../../util.js';
 import { setAdditionalHeaders } from '../../additional-headers.js';
@@ -128,6 +129,7 @@ router.post('/status', async function (request, response) {
             case TEXTGEN_TYPES.INFERMATICAI:
             case TEXTGEN_TYPES.OPENROUTER:
             case TEXTGEN_TYPES.FEATHERLESS:
+            case TEXTGEN_TYPES.VERCEL_AI_GATEWAY:
                 url += '/v1/models';
                 break;
             case TEXTGEN_TYPES.DREAMGEN:
@@ -319,6 +321,7 @@ router.post('/generate', async function (request, response) {
                 url += '/api/generate';
                 break;
             case TEXTGEN_TYPES.OPENROUTER:
+            case TEXTGEN_TYPES.VERCEL_AI_GATEWAY:
                 url += '/v1/chat/completions';
                 break;
         }
@@ -373,6 +376,11 @@ router.post('/generate', async function (request, response) {
 
         if (request.body.api_type === TEXTGEN_TYPES.VLLM) {
             request.body = _.pickBy(request.body, (_, key) => VLLM_KEYS.includes(key));
+            args.body = JSON.stringify(request.body);
+        }
+
+        if (request.body.api_type === TEXTGEN_TYPES.VERCEL_AI_GATEWAY) {
+            request.body = _.pickBy(request.body, (_, key) => VERCEL_AI_GATEWAY_KEYS.includes(key));
             args.body = JSON.stringify(request.body);
         }
 
