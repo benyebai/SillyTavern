@@ -506,6 +506,7 @@ jQuery(async function () {
                         'nanogpt': SECRET_KEYS.NANOGPT,
                         'chutes': SECRET_KEYS.CHUTES,
                         'electronhub': SECRET_KEYS.ELECTRONHUB,
+                        'vercel_ai_gateway': SECRET_KEYS.VERCEL_AI_GATEWAY,
                         'zai': SECRET_KEYS.ZAI,
                     };
 
@@ -622,6 +623,7 @@ jQuery(async function () {
         await processEndpoint('electronhub', '/api/backends/chat-completions/multimodal-models/electronhub');
         await processEndpoint('mistral', '/api/backends/chat-completions/multimodal-models/mistral');
         await processEndpoint('xai', '/api/backends/chat-completions/multimodal-models/xai');
+        await processEndpoint('vercel_ai_gateway', '/api/vercel-ai-gateway/models/multimodal');
     }
 
     await addSettings();

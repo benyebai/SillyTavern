@@ -256,3 +256,37 @@ router.post('/embeddings', async (req, res) => {
         return res.sendStatus(500);
     }
 });
+
+/**
+ * POST /models/multimodal endpoint
+ * Fetches available multimodal (vision) models from Vercel AI Gateway
+ */
+router.post('/models/multimodal', async (req, res) => {
+    try {
+        const key = readSecret(req.user.directories, SECRET_KEYS.VERCEL_AI_GATEWAY);
+
+        if (!key) {
+            console.warn('Vercel AI Gateway API key not found');
+            return res.json([]);
+        }
+
+        const models = await fetchAllModels(key);
+
+        // Filter models that support vision/multimodal
+        const multimodalModels = models.filter(model =>
+            model.capabilities?.includes('vision') ||
+            model.capabilities?.includes('multimodal') ||
+            model.id?.includes('vision') ||
+            model.id?.includes('gpt-4o') ||
+            model.id?.includes('gpt-4-turbo') ||
+            model.id?.includes('claude-3') ||
+            model.id?.includes('gemini')
+        );
+
+        // Return just the model IDs as an array of strings
+        return res.json(multimodalModels.map(m => m.id));
+    } catch (error) {
+        console.error('Error fetching Vercel AI Gateway multimodal models:', error);
+        return res.json([]);
+    }
+});
