@@ -4,8 +4,10 @@ import fs from 'node:fs';
 import vectra from 'vectra';
 import express from 'express';
 import sanitize from 'sanitize-filename';
+import fetch from 'node-fetch';
 
 import { getConfigValue } from '../util.js';
+import { readSecret, SECRET_KEYS } from './secrets.js';
 
 import { getNomicAIBatchVector, getNomicAIVector } from '../vectors/nomicai-vectors.js';
 import { getOpenAIVector, getOpenAIBatchVector } from '../vectors/openai-vectors.js';
@@ -36,8 +38,94 @@ const SOURCES = [
     'vertexai',
     'electronhub',
     'openrouter',
+    'vercel_ai_gateway',
     'chutes',
 ];
+
+const API_VERCEL_AI_GATEWAY = 'https://ai-gateway.vercel.sh/v1';
+
+/**
+ * Gets the vector for the given text using Vercel AI Gateway.
+ * @param {string} text - The text to get the vector for
+ * @param {import('../users.js').UserDirectoryList} directories - The directories object for the user
+ * @param {string} model - The model to use for embeddings
+ * @returns {Promise<number[]>} - The vector for the text
+ */
+async function getVercelAIGatewayVector(text, directories, model) {
+    const key = readSecret(directories, SECRET_KEYS.VERCEL_AI_GATEWAY);
+    if (!key) {
+        throw new Error('Vercel AI Gateway API key not found');
+    }
+
+    const response = await fetch(`${API_VERCEL_AI_GATEWAY}/embeddings`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${key}`,
+        },
+        body: JSON.stringify({
+            model: model || 'text-embedding-3-small',
+            input: text,
+        }),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Vercel AI Gateway embeddings failed: ${response.status} ${errorText}`);
+    }
+
+    /** @type {any} */
+    const data = await response.json();
+
+    if (!data?.data?.[0]?.embedding) {
+        throw new Error('Vercel AI Gateway embeddings response was not in expected format');
+    }
+
+    return data.data[0].embedding;
+}
+
+/**
+ * Gets batch vectors for the given texts using Vercel AI Gateway.
+ * @param {string[]} texts - The texts to get vectors for
+ * @param {import('../users.js').UserDirectoryList} directories - The directories object for the user
+ * @param {string} model - The model to use for embeddings
+ * @returns {Promise<number[][]>} - The vectors for the texts
+ */
+async function getVercelAIGatewayBatchVector(texts, directories, model) {
+    const key = readSecret(directories, SECRET_KEYS.VERCEL_AI_GATEWAY);
+    if (!key) {
+        throw new Error('Vercel AI Gateway API key not found');
+    }
+
+    const response = await fetch(`${API_VERCEL_AI_GATEWAY}/embeddings`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${key}`,
+        },
+        body: JSON.stringify({
+            model: model || 'text-embedding-3-small',
+            input: texts,
+        }),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Vercel AI Gateway embeddings failed: ${response.status} ${errorText}`);
+    }
+
+    /** @type {any} */
+    const data = await response.json();
+
+    if (!data?.data || !Array.isArray(data.data)) {
+        throw new Error('Vercel AI Gateway embeddings response was not in expected format');
+    }
+
+    // Sort by index to ensure correct order
+    data.data.sort((a, b) => a.index - b.index);
+
+    return data.data.map(x => x.embedding);
+}
 
 /**
  * Gets the vector for the given text from the given source.
@@ -60,6 +148,8 @@ async function getVector(source, sourceSettings, text, isQuery, directories) {
             return getOpenAIVector(text, source, directories, sourceSettings.model);
         case 'openrouter':
             return getOpenAIVector(text, source, directories, sourceSettings.model);
+        case 'vercel_ai_gateway':
+            return getVercelAIGatewayVector(text, directories, sourceSettings.model);
         case 'transformers':
             return getTransformersVector(text);
         case 'extras':
@@ -116,6 +206,9 @@ async function getBatchVector(source, sourceSettings, texts, isQuery, directorie
                 break;
             case 'openrouter':
                 results.push(...await getOpenAIBatchVector(batch, source, directories, sourceSettings.model));
+                break;
+            case 'vercel_ai_gateway':
+                results.push(...await getVercelAIGatewayBatchVector(batch, directories, sourceSettings.model));
                 break;
             case 'transformers':
                 results.push(...await getTransformersBatchVector(batch));
@@ -237,6 +330,10 @@ function getSourceSettings(source, request) {
         case 'chutes':
             return {
                 model: String(request.body.model || 'chutes-qwen-qwen3-embedding-8b'),
+            };
+        case 'vercel_ai_gateway':
+            return {
+                model: String(request.body.model || 'text-embedding-3-small'),
             };
         default:
             return {};

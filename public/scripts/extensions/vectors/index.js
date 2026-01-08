@@ -63,6 +63,7 @@ const settings = {
     openai_model: 'text-embedding-ada-002',
     electronhub_model: 'text-embedding-3-small',
     openrouter_model: 'openai/text-embedding-3-large',
+    vercel_ai_gateway_model: 'text-embedding-3-small',
     cohere_model: 'embed-english-v3.0',
     ollama_model: 'mxbai-embed-large',
     ollama_keep: false,
@@ -833,6 +834,9 @@ function getVectorsRequestBody(args = {}) {
         case 'chutes':
             body.model = extension_settings.vectors.chutes_model;
             break;
+        case 'vercel_ai_gateway':
+            body.model = extension_settings.vectors.vercel_ai_gateway_model;
+            break;
         default:
             break;
     }
@@ -919,6 +923,7 @@ function throwIfSourceInvalid() {
         settings.source === 'electronhub' && !secret_state[SECRET_KEYS.ELECTRONHUB] ||
         settings.source === 'chutes' && !secret_state[SECRET_KEYS.CHUTES] ||
         settings.source === 'openrouter' && !secret_state[SECRET_KEYS.OPENROUTER] ||
+        settings.source === 'vercel_ai_gateway' && !secret_state[SECRET_KEYS.VERCEL_AI_GATEWAY] ||
         settings.source === 'palm' && !secret_state[SECRET_KEYS.MAKERSUITE] ||
         settings.source === 'vertexai' && !secret_state[SECRET_KEYS.VERTEXAI] && !secret_state[SECRET_KEYS.VERTEXAI_SERVICE_ACCOUNT] ||
         settings.source === 'mistral' && !secret_state[SECRET_KEYS.MISTRALAI] ||
@@ -1134,6 +1139,7 @@ function toggleSettings() {
     $('#electronhub_vectorsModel').toggle(settings.source === 'electronhub');
     $('#chutes_vectorsModel').toggle(settings.source === 'chutes');
     $('#openrouter_vectorsModel').toggle(settings.source === 'openrouter');
+    $('#vercel_ai_gateway_vectorsModel').toggle(settings.source === 'vercel_ai_gateway');
     $('#cohere_vectorsModel').toggle(settings.source === 'cohere');
     $('#ollama_vectorsModel').toggle(settings.source === 'ollama');
     $('#llamacpp_vectorsModel').toggle(settings.source === 'llamacpp');
@@ -1152,6 +1158,9 @@ function toggleSettings() {
             break;
         case 'openrouter':
             loadOpenRouterModels();
+            break;
+        case 'vercel_ai_gateway':
+            loadVercelAIGatewayModels();
             break;
         case 'chutes':
             loadChutesModels();
@@ -1268,6 +1277,44 @@ function populateOpenRouterModelSelect(models) {
         settings.openrouter_model = models[0].id;
     }
     $('#vectors_openrouter_model').val(settings.openrouter_model);
+}
+
+async function loadVercelAIGatewayModels() {
+    try {
+        const response = await fetch('/api/vercel-ai-gateway/models/embedding', {
+            method: 'POST',
+            headers: getRequestHeaders(),
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        /** @type {Array<any>} */
+        const data = await response.json();
+        const models = Array.isArray(data) ? data : [];
+        populateVercelAIGatewayModelSelect(models);
+    } catch (err) {
+        console.warn('Vercel AI Gateway models fetch failed', err);
+        populateVercelAIGatewayModelSelect([]);
+    }
+}
+
+/**
+ * Populates the Vercel AI Gateway model select element.
+ * @param {{ id: string, name?: string }[]} models Vercel AI Gateway models
+ */
+function populateVercelAIGatewayModelSelect(models) {
+    const select = $('#vectors_vercel_ai_gateway_model');
+    select.empty();
+    for (const m of models) {
+        const option = document.createElement('option');
+        option.value = m.id;
+        option.text = m.name || m.id;
+        select.append(option);
+    }
+    if (!settings.vercel_ai_gateway_model && models.length) {
+        settings.vercel_ai_gateway_model = models[0].id;
+    }
+    $('#vectors_vercel_ai_gateway_model').val(settings.vercel_ai_gateway_model);
 }
 
 /**
@@ -1680,6 +1727,11 @@ jQuery(async () => {
     });
     $('#vectors_openrouter_model').val(settings.openrouter_model).on('change', () => {
         settings.openrouter_model = String($('#vectors_openrouter_model').val());
+        Object.assign(extension_settings.vectors, settings);
+        saveSettingsDebounced();
+    });
+    $('#vectors_vercel_ai_gateway_model').val(settings.vercel_ai_gateway_model).on('change', () => {
+        settings.vercel_ai_gateway_model = String($('#vectors_vercel_ai_gateway_model').val());
         Object.assign(extension_settings.vectors, settings);
         saveSettingsDebounced();
     });

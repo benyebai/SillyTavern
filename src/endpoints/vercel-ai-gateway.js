@@ -180,3 +180,79 @@ router.post('/image/generate', async (req, res) => {
         return res.sendStatus(500);
     }
 });
+
+/**
+ * POST /models/embedding endpoint
+ * Fetches available embedding models from Vercel AI Gateway
+ */
+router.post('/models/embedding', async (req, res) => {
+    try {
+        const key = readSecret(req.user.directories, SECRET_KEYS.VERCEL_AI_GATEWAY);
+
+        if (!key) {
+            console.warn('Vercel AI Gateway API key not found');
+            return res.status(400).json({ error: 'Vercel AI Gateway API key not found' });
+        }
+
+        const models = await fetchAllModels(key);
+
+        // Filter models that support embeddings
+        const embeddingModels = models.filter(model =>
+            model.id?.includes('embedding') ||
+            model.id?.includes('embed') ||
+            model.capabilities?.includes('embedding')
+        );
+
+        return res.json(embeddingModels);
+    } catch (error) {
+        console.error('Error fetching Vercel AI Gateway embedding models:', error);
+        return res.sendStatus(500);
+    }
+});
+
+/**
+ * POST /embeddings endpoint
+ * Creates embeddings using Vercel AI Gateway
+ */
+router.post('/embeddings', async (req, res) => {
+    try {
+        const key = readSecret(req.user.directories, SECRET_KEYS.VERCEL_AI_GATEWAY);
+
+        if (!key) {
+            console.warn('Vercel AI Gateway API key not found');
+            return res.status(400).json({ error: 'Vercel AI Gateway API key not found' });
+        }
+
+        const { model, input } = req.body;
+
+        if (!input) {
+            return res.status(400).json({ error: 'Input is required' });
+        }
+
+        const response = await fetch(`${API_VERCEL_AI_GATEWAY}/embeddings`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${key}`,
+            },
+            body: JSON.stringify({
+                model: model || 'text-embedding-3-small',
+                input: input,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Vercel AI Gateway embeddings failed:', response.status, errorText);
+            return res.status(response.status).json({ error: 'Embeddings generation failed', details: errorText });
+        }
+
+        /** @type {any} */
+        const data = await response.json();
+
+        return res.json(data);
+    } catch (error) {
+        console.error('Error generating embeddings with Vercel AI Gateway:', error);
+        return res.sendStatus(500);
+    }
+});
